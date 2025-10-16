@@ -74,18 +74,18 @@
   <div id="historyContainer"><h2>История сессий</h2></div>
 
   <div class="nav-left-floating">
-    <a href="summary_fixed_test.html">⬅ Сводный чек-лист</a>
+    <a href="summary_fixed_igram.html">⬅ Сводный чек-лист</a>
   </div>
 
   <!-- Modal for selecting prompt type -->
   <div id="prompt-modal">
     <div class="modal-content">
       <h3>Выберите тип подсказки</h3>
-      <button onclick="selectPrompt('Жестовая')">Жестовая</button>
-      <button onclick="selectPrompt('Вербальная')">Вербальная</button>
-      <button onclick="selectPrompt('Эхо')">Эхо</button>
-      <button onclick="selectPrompt('Частичная физическая')">Частичная физическая</button>
-      <button onclick="selectPrompt('Полная физическая')">Полная физическая</button>
+      <button onclick="selectPrompt('G')">Жестовая</button>
+      <button onclick="selectPrompt('V')">Вербальная</button>
+      <button onclick="selectPrompt('E')">Эхо</button>
+      <button onclick="selectPrompt('PF')">Частичная физическая</button>
+      <button onclick="selectPrompt('FF')">Полная физическая</button>
       <button onclick="closePromptModal()">Отмена</button>
     </div>
   </div>
@@ -101,8 +101,17 @@
 
     // long-press helpers for 🤝
     let longPressTimer = null;
-    let suppressNextClick = false;   // блокируем «короткий» клик, если уже был long-press
+    let suppressNextClick = false;
     let currentPromptTarget = null;
+
+    // persist prompt details across reloads
+    // это массив по всем блокам (в порядке DOM): {G,V,E,PF,FF}
+    function getSavedPromptDetails() {
+      return JSON.parse(localStorage.getItem('aba_prompt_details') || '[]');
+    }
+    function setSavedPromptDetails(arr) {
+      localStorage.setItem('aba_prompt_details', JSON.stringify(arr));
+    }
 
     /* ================== MODE ================== */
     function toggleMode() {
@@ -181,6 +190,19 @@
       });
       localStorage.setItem('aba_counts', JSON.stringify(newCounts));
 
+      // перенос детальных подсказок: на каждую выбранную цель свой объект {G,V,E,PF,FF}
+      const oldPD = getSavedPromptDetails();
+      const newPD = [];
+      newNames.forEach(name => {
+        const oldIndex = oldNames.indexOf(name);
+        if (oldIndex !== -1 && oldPD[oldIndex]) {
+          newPD.push(oldPD[oldIndex]);
+        } else {
+          newPD.push({G:0,V:0,E:0,PF:0,FF:0});
+        }
+      });
+      setSavedPromptDetails(newPD);
+
       closeGoalSelector();
       renderDaily();
       loadProgress();
@@ -220,6 +242,9 @@
 
           const block = document.createElement('div');
           block.className = 'block' + (mastered ? ' mastered' : '');
+          // в data-index сохраним порядковый номер блока для синхронизации с aba_prompt_details
+          block.dataset.blockIndex = document.querySelectorAll('.block').length;
+
           block.innerHTML = `
             <div class="goal-label">${txt}</div>
             <div class="btn-set">
@@ -236,6 +261,19 @@
         dailyContainer.append(wrapper);
       }
 
+      // Инициализируем / восстанавливаем массив детальных подсказок под текущее число блоков
+      const blocks = Array.from(document.querySelectorAll('.block'));
+      let pd = getSavedPromptDetails();
+      if (pd.length !== blocks.length) {
+        // расширим/обрежем
+        const fresh = [];
+        for (let k = 0; k < blocks.length; k++) {
+          fresh[k] = pd[k] || {G:0,V:0,E:0,PF:0,FF:0};
+        }
+        pd = fresh;
+        setSavedPromptDetails(pd);
+      }
+
       // навешиваем обработчики на 🤝 после рендера
       wirePromptButtons();
     }
@@ -247,9 +285,9 @@
       function startPress(btn) {
         suppressNextClick = false;
         longPressTimer = setTimeout(() => {
-          suppressNextClick = true;          // блокируем обычный клик
+          suppressNextClick = true;
           currentPromptTarget = btn;
-          modal.style.display = 'flex';      // показываем выбор подсказки
+          modal.style.display = 'flex';
         }, 450);
       }
       function endPress() {
@@ -270,13 +308,9 @@
         btn.addEventListener('touchend', endPress);
         btn.addEventListener('touchcancel', endPress);
 
-        // обычный короткий клик = просто P
+        // короткий клик = P
         btn.addEventListener('click', () => {
-          if (suppressNextClick) {
-            // клик пришёл после long-press — просто гасим его
-            suppressNextClick = false;
-            return;
-          }
+          if (suppressNextClick) { suppressNextClick = false; return; }
           increment(btn, 'P');
         });
       });
@@ -319,8 +353,18 @@
             const cell = tr.insertCell();
             const arr  = sess.data[i-1] || [];
             const v    = arr[k];
+            let text = v == null ? '—' : v + '%';
+
+            // если есть детализация подсказок на ту сессию — добавим кратко
+            const pdProt = (sess.promptDetails && sess.promptDetails[i-1]) || null;
+            const pdStr  = pdProt ? pdProt[k] : null;
+            if (pdStr && /\d/.test(pdStr)) {
+              text += ' [' + pdStr + ']';
+            }
+
             const mastered = checkMastery(arr);
-            cell.textContent = v == null ? '—' : v + '%' + (mastered ? ' ✓' : '');
+            if (mastered && v != null) text += ' ✓';
+            cell.textContent = text;
           });
         });
 
@@ -334,11 +378,21 @@
       // type: '+', 'P', '-'
       const cntEl = btn.nextElementSibling;
       cntEl.textContent = (+cntEl.textContent || 0) + 1;
+
+      // если это подсказка — увеличим детальный счётчик «P (generic)» и конкретный тип, если он пришёл из selectPrompt()
+      if (type === 'P' && btn.classList.contains('btn-prompt')) {
+        const block = btn.closest('.block');
+        const blockIndex = Array.from(document.querySelectorAll('.block')).indexOf(block);
+        const pd = getSavedPromptDetails();
+        pd[blockIndex] = pd[blockIndex] || {G:0,V:0,E:0,PF:0,FF:0};
+        // generic P уже учли в счётчике; конкретный тип добавляется в selectPrompt()
+        setSavedPromptDetails(pd);
+      }
+
       updatePercentages();
       saveProgress();
       undoStack.push(btn);
       showUndo();
-      // при покликовой отправке можно было бы логировать type; у нас агрегированная отправка в clearData()
     }
 
     function updatePercentages() {
@@ -385,6 +439,8 @@
         const btn = undoStack.pop();
         const cnt = btn.nextElementSibling;
         cnt.textContent = Math.max(+cnt.textContent - 1, 0);
+
+        // если откатываем подсказку — детальная статистика не уменьшится (можно добавить при желании)
         updatePercentages();
         saveProgress();
       }
@@ -392,49 +448,84 @@
     };
 
     /* ================== SEND SESSION ================== */
+    function compactPrompt(pdObj) {
+      // превращаем {G:2,V:1,E:0,PF:1,FF:0} -> "G2 V1 E0 PF1 FF0" (только >0 показываем)
+      const parts = [];
+      if (!pdObj) return '';
+      for (const key of ['G','V','E','PF','FF']) {
+        const n = pdObj[key] || 0;
+        if (n > 0) parts.push(key + n);
+      }
+      return parts.join(' ');
+    }
+
     function clearData() {
       const date  = new Date().toLocaleDateString('ru-RU');
       const child = localStorage.getItem('child_name') || '';
-      const session = { date, data: [] };
+      const session = { date, data: [], promptDetails: [] };
 
-      document.querySelectorAll('.protocol-container').forEach(pc => {
+      const allBlocks = Array.from(document.querySelectorAll('.block'));
+      const pdAll = getSavedPromptDetails();
+
+      document.querySelectorAll('.protocol-container').forEach((pc, protIdx) => {
         const protocol = pc.querySelector('h3').textContent;
         const goalsHistory = [];
         const goalsServer  = [];
+        const pdForProtocol = [];
 
-        pc.querySelectorAll('.block').forEach(block => {
+        const blocks = Array.from(pc.querySelectorAll('.block'));
+        blocks.forEach(block => {
           const name   = block.querySelector('.goal-label').textContent.trim();
           const counts = [...block.querySelectorAll('.count')].map(d => +d.textContent || 0);
           const total  = counts.reduce((s,v) => s + v, 0);
           const pct    = total ? Math.round(counts[0] / total * 100) : null;
 
-          goalsHistory.push(pct);
+          // собрать детальные подсказки по глобальному индексу блока
+          const blockIndex = allBlocks.indexOf(block);
+          const pdObj = pdAll[blockIndex] || {G:0,V:0,E:0,PF:0,FF:0};
+          const pdStr = compactPrompt(pdObj);
 
+          goalsHistory.push(pct);
+          pdForProtocol.push(pdStr || '');
+
+          // responses: как прежде (+ P -), а детали отдельным полем
           const responses = [];
           for (let i = 0; i < counts[0]; i++) responses.push('+');
-          for (let i = 0; i < counts[1]; i++) responses.push('P'); // детализация типов подсказок при желании добавляется тут
+          for (let i = 0; i < counts[1]; i++) responses.push('P');
           for (let i = 0; i < counts[2]; i++) responses.push('-');
 
-          goalsServer.push({ name, responses: responses.join(' '), percent: pct != null ? pct + '%' : '' });
+          goalsServer.push({
+            name,
+            responses: responses.join(' '),
+            percent: pct != null ? pct + '%' : '',
+            promptDetails: pdStr           // <--- НОВОЕ ПОЛЕ
+          });
         });
 
         session.data.push(goalsHistory);
+        session.promptDetails.push(pdForProtocol);
+
+        // отправляем по протоколу
         sendSessionResults({ protocol, date, child, goals: goalsServer });
       });
 
+      // сохраняем локально всю сессию (с деталями подсказок)
       const hist = JSON.parse(localStorage.getItem('aba_history') || '[]');
       hist.push(session);
       if (hist.length > 10) hist.shift();
       localStorage.setItem('aba_history', JSON.stringify(hist));
 
+      // сбрасываем счётчики и детальные подсказки
       document.querySelectorAll('.count').forEach(e => e.textContent = '0');
+      setSavedPromptDetails(Array.from(document.querySelectorAll('.block')).map(() => ({G:0,V:0,E:0,PF:0,FF:0})));
+
       updatePercentages();
       saveProgress();
       renderHistory();
     }
 
     function sendSessionResults(sessionData) {
-      // Замените URL на свой актуальный (без двойного https)
+      // Замените URL на свой актуальный
       fetch('https://script.google.com/macros/s/AKfycbzR_QSNC8yEo6lJM2sTnDIlUU1QXOhcRcTYyCVW8M9NROjbZEMFYiUgoiU97nnL1-vY_g/exec', {
         method: 'POST',
         mode: 'no-cors',
@@ -447,11 +538,19 @@
     function closePromptModal() {
       document.getElementById('prompt-modal').style.display = 'none';
     }
-    function selectPrompt(type) {
-      // здесь можно логировать конкретный тип подсказки, если потребуется
+    function selectPrompt(code) {
+      // code: 'G' | 'V' | 'E' | 'PF' | 'FF'
       document.getElementById('prompt-modal').style.display = 'none';
       if (currentPromptTarget) {
-        increment(currentPromptTarget, 'P'); // увеличиваем «подсказка»
+        // 1) общий инкремент «P»
+        increment(currentPromptTarget, 'P');
+        // 2) детальная пометка
+        const block = currentPromptTarget.closest('.block');
+        const blockIndex = Array.from(document.querySelectorAll('.block')).indexOf(block);
+        const pd = getSavedPromptDetails();
+        pd[blockIndex] = pd[blockIndex] || {G:0,V:0,E:0,PF:0,FF:0};
+        pd[blockIndex][code] = (pd[blockIndex][code] || 0) + 1;
+        setSavedPromptDetails(pd);
         currentPromptTarget = null;
       }
     }
