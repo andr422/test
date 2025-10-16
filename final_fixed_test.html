@@ -5,67 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ежедневный ABA Чек-лист</title>
   <style>
-    /* Базовые стили */
     body { font-family: sans-serif; margin: 0; padding: 16px; max-width: 960px; margin: auto; background: #f8f9fa; }
     h2, h3 { text-align: center; }
-    .mb-16 { margin-bottom: 16px; }
-
-    /* Управление режимом */
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    body.editing .btn-set button { pointer-events: none; opacity: 0.5; }
-
-    /* Протоколы */
-    .protocol-container { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .block { margin-bottom: 16px; }
-    .goal-label { display: block; padding: 8px; background: #e9ecef; border-radius: 4px; margin-bottom: 8px; }
-
-    /* Кнопки */
-    .btn-set { display: flex; justify-content: space-around; gap: 12px; margin-bottom: 8px; }
-    .btn-set button { flex: 1; padding: 18px; font-size: 26px; border: none; border-radius: 12px; }
-    .btn-success { background: #d4edda; }
-    .btn-prompt  { background: #fff3cd; }
-    .btn-error   { background: #f8d7da; }
-    .count { text-align: center; font-weight: bold; font-size: 16px; margin-top: 6px; }
-
-    /* Текущий процент */
-    .percent { text-align: right; font-weight: bold; }
-
-    /* Предыдущие проценты */
-    .prev-percent { font-size: 12px; color: #555; margin-top: 4px; }
-    .prev-percent::before { content: 'Пред. сессии: '; font-weight: bold; }
-
-    /* Кнопка очистки */
-    #clearBtn { padding: 8px 16px; font-size: 14px; border: none; border-radius: 8px; background: #dc3545; color: #fff; cursor: pointer; transition: background 0.2s; }
-    #clearBtn:hover { background: #c82333; }
-
-    /* Модалка */
-    #goal-selector-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-    #goal-selector-modal .modal-content { background: #fff; padding: 20px; border-radius: 8px; max-width: 400px; max-height: 80%; overflow: auto; }
-
-    /* Undo */
-    #undo-banner { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #e0e0e0; padding: 8px 16px; border-radius: 20px; font-size: 14px; display: none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer; }
-
-    /* История */
-    .history-session h3 { margin: 12px 0 4px; }
-    .history-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px; }
-    .history-table th, .history-table td { border: 1px solid #ccc; padding: 4px 6px; }
-    .history-table th { background: #f0f0f0; }
-
-    .nav-left-floating { position: fixed; bottom: 20px; left: 20px; }
-    .nav-left-floating a { background: #007bff; color: white; padding: 14px 18px; border-radius: 30px; text-decoration: none; }
+    .controls { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    body.editing .btn-set button { pointer-events:none; opacity:0.5; }
+    .protocol-container { background:#fff; border-radius:12px; padding:16px; margin-bottom:24px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .block { margin-bottom:16px; padding: 8px; border-radius: 8px; }
+    .block.mastered { border: 2px solid green; background: #e6ffe6; }
+    .goal-label { display:block; padding:8px; background:#e9ecef; border-radius:4px; margin-bottom:8px; }
+    .btn-set { display:flex; justify-content:space-around; gap:12px; margin-bottom:8px; }
+    .btn-set button { flex:1; padding:18px; font-size:26px; border:none; border-radius:12px; }
+    .btn-success{ background:#d4edda; } .btn-prompt{ background:#fff3cd; } .btn-error{ background:#f8d7da; }
+    .count { text-align:center; font-weight:bold; font-size:16px; margin-top:6px; }
+    .percent { text-align:right; font-weight:bold; }
+    .percent.mastered { color: green; font-weight: bold; }
+    .prev-percent { font-size:12px; color:#555; margin-top:4px; }
+    .prev-percent::before { content:'Пред. сессии: '; font-weight:bold; }
+    #clearBtn { padding:8px 16px; font-size:14px; border:none; border-radius:8px; background:#dc3545; color:#fff; cursor:pointer; transition:background 0.2s; }
+    #clearBtn:hover { background:#c82333; }
+    #goal-selector-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
+    #goal-selector-modal .modal-content { background:#fff; padding:20px; border-radius:8px; max-width:400px; max-height:80%; overflow:auto; }
+    #undo-banner { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#e0e0e0; padding:8px 16px; border-radius:20px; font-size:14px; display:none; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer; }
+    .history-table { width:100%; border-collapse:collapse; margin-bottom:16px; font-size:14px; }
+    .history-table th, .history-table td { border:1px solid #ccc; padding:4px 6px; }
+    .history-table th { background:#f0f0f0; }
+    .nav-left-floating { position:fixed; bottom:20px; left:20px; }
+    .nav-left-floating a { background:#007bff; color:white; padding:14px 18px; border-radius:30px; text-decoration:none; }
+    /* Modal for prompt selection */
+    #prompt-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
+    #prompt-modal .modal-content { background:#fff; padding:20px; border-radius:8px; max-width:320px; }
+    #prompt-modal button { display:block; width:100%; margin:6px 0; padding:10px; font-size:16px; border:none; border-radius:6px; background:#f1f1f1; cursor:pointer; }
+    #prompt-modal button:hover { background:#ddd; }
   </style>
 </head>
 <body>
   <h2>Ежедневный ABA Чек-лист</h2>
-  <div class="controls mb-16">
+  <div class="controls">
     <div>
       <label for="modeSlider">Режим:</label>
-      <input id="modeSlider" type="range" min="0" max="1" step="1" value="1" />
+      <input id="modeSlider" type="range" min="0" max="1" value="1"/>
       <span id="modeText">Запись ответов</span>
     </div>
-    <button id="clearBtn">Сбросить данные</button>
+    <button id="clearBtn">Отправить данные</button>
   </div>
-
   <div id="goal-selector-modal">
     <div class="modal-content">
       <h3>Выберите цели</h3>
@@ -74,36 +56,47 @@
       <button onclick="closeGoalSelector()">Отмена</button>
     </div>
   </div>
-
   <div id="dailyContainer"></div>
   <div id="undo-banner">Отменить действие</div>
   <div id="historyContainer"><h2>История сессий</h2></div>
-
   <div class="nav-left-floating">
-    <a href="summary_fixed_igram.html">⬅ Сводный чек-лист</a>
+    <a href="summary_fixed_test.html">⬅ Сводный чек-лист</a>
   </div>
-
+  <!-- Modal for selecting prompt type -->
+  <div id="prompt-modal">
+    <div class="modal-content">
+      <h3>Выберите тип подсказки</h3>
+      <button onclick="selectPrompt('Жестовая')">Жестовая</button>
+      <button onclick="selectPrompt('Вербальная')">Вербальная</button>
+      <button onclick="selectPrompt('Эхо')">Эхо</button>
+      <button onclick="selectPrompt('Частичная физическая')">Частичная физическая</button>
+      <button onclick="selectPrompt('Полная физическая')">Полная физическая</button>
+      <button onclick="closePromptModal()">Отмена</button>
+    </div>
+  </div>
   <script>
-    const modeSlider = document.getElementById('modeSlider');
-    const modeText = document.getElementById('modeText');
+    const modeSlider     = document.getElementById('modeSlider');
+    const modeText       = document.getElementById('modeText');
     const dailyContainer = document.getElementById('dailyContainer');
     const historyContainer = document.getElementById('historyContainer');
-    const undoBanner = document.getElementById('undo-banner');
+    const undoBanner     = document.getElementById('undo-banner');
     let undoStack = [];
-
+    let longPressTimer = null;
+    let currentPromptTarget = null;
+    // toggle edit mode
     function toggleMode() {
       const edit = modeSlider.value === '0';
       document.body.classList.toggle('editing', edit);
       modeText.textContent = edit ? 'Заблокировано' : 'Запись ответов';
     }
-
+    // helper: number of protocols
     function getProtocolsCount() {
       return Object.keys(localStorage)
         .map(k => (k.match(/^protocol(\d+)_title$/) || [])[1])
         .filter(n => n).map(Number)
         .reduce((max, n) => Math.max(max, n), 0);
     }
-
+    // goal selection modal
     function openGoalSelector(idx) {
       window.currentProtocol = idx;
       const opts = document.getElementById('goal-options');
@@ -111,11 +104,19 @@
       const saved = JSON.parse(localStorage.getItem(`protocol${idx}_selectedGoals`) || '[]');
       for (let j = 1; j <= 10; j++) {
         const text = localStorage.getItem(`protocol${idx}_goal${j}`) || `Цель ${j}`;
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = `g${j}`; cb.value = j;
+        const cb   = document.createElement('input');
+        cb.type  = 'checkbox';
+        cb.id    = `g${j}`;
+        cb.value = j;
         if (saved.includes(j)) cb.checked = true;
-        cb.onchange = () => { if (opts.querySelectorAll('input:checked').length > 10) cb.checked = false; };
-        const lb = document.createElement('label'); lb.htmlFor = cb.id; lb.textContent = text;
-        const dv = document.createElement('div'); dv.append(cb, lb);
+        cb.onchange = () => {
+          if (opts.querySelectorAll('input:checked').length > 10) cb.checked = false;
+        };
+        const lb  = document.createElement('label');
+        lb.htmlFor = cb.id;
+        lb.textContent = text;
+        const dv  = document.createElement('div');
+        dv.append(cb, lb);
         opts.append(dv);
       }
       document.getElementById('goal-selector-modal').style.display = 'flex';
@@ -123,158 +124,157 @@
     function closeGoalSelector() {
       document.getElementById('goal-selector-modal').style.display = 'none';
     }
-
     function saveSelectedGoals() {
       const idx = window.currentProtocol;
-      const sel = [...document.querySelectorAll('#goal-options input:checked')].map(cb => +cb.value);
-      localStorage.setItem(`protocol${idx}_selectedGoals`, JSON.stringify(sel));
-      closeGoalSelector(); renderDaily(); renderHistory();
-    }
-
-    function clearData() {
-      const date = localStorage.getItem('session_date') || new Date().toISOString().split('T')[0];
-      const session = { date, data: [] };
-      document.querySelectorAll('.protocol-container').forEach(pc => {
-        const arr = [...pc.querySelectorAll('.percent')].map(e => {
-          const t = e.textContent.trim();
-          return t === '—' ? null : parseInt(t);
+      const oldSel   = JSON.parse(localStorage.getItem(`protocol${idx}_selectedGoals`) || '[]');
+      const oldNames = JSON.parse(localStorage.getItem(`protocol${idx}_goalNames`) || '[]');
+      const newSel   = [...document.querySelectorAll('#goal-options input:checked')].map(cb => +cb.value);
+      const newNames = newSel.map(j => localStorage.getItem(`protocol${idx}_goal${j}`) || '');
+      // save new selection
+      localStorage.setItem(`protocol${idx}_selectedGoals`, JSON.stringify(newSel));
+      localStorage.setItem(`protocol${idx}_goalNames`, JSON.stringify(newNames));
+      // update aba_history by transferring only unchanged goals
+      let history = JSON.parse(localStorage.getItem('aba_history') || '[]');
+      history = history.map(sess => {
+        const oldData = sess.data[idx - 1] || [];
+        const newData = [];
+        newNames.forEach((name, pos) => {
+          const oldIndex = oldNames.indexOf(name);
+          newData[pos] = oldIndex !== -1 ? oldData[oldIndex] : null;
         });
-        session.data.push(arr);
+        sess.data[idx - 1] = newData;
+        return sess;
       });
-      const hist = JSON.parse(localStorage.getItem('aba_history') || '[]'); hist.push(session);
-      if (hist.length > 10) hist.shift();
-      localStorage.setItem('aba_history', JSON.stringify(hist));
-      document.querySelectorAll('.count').forEach(e => e.textContent = '0');
-      updatePercentages(); saveProgress(); renderHistory();
+      localStorage.setItem('aba_history', JSON.stringify(history));
+      // update aba_counts (counts for each goal) transferring only unchanged goals
+      const oldCounts = JSON.parse(localStorage.getItem('aba_counts') || '[]');
+      const newCounts = [];
+      newNames.forEach(name => {
+        const oldIndex = oldNames.indexOf(name);
+        if (oldIndex !== -1) {
+          newCounts.push(oldCounts[oldIndex * 3] || '0');
+          newCounts.push(oldCounts[oldIndex * 3 + 1] || '0');
+          newCounts.push(oldCounts[oldIndex * 3 + 2] || '0');
+        } else {
+          newCounts.push('0', '0', '0');
+        }
+      });
+      localStorage.setItem('aba_counts', JSON.stringify(newCounts));
+      closeGoalSelector();
+      renderDaily();
+      loadProgress();
+      renderHistory();
     }
-
+    // mastery detection
+    function checkMastery(goalHistory) {
+      const last3 = goalHistory.slice(-3).filter(v => v != null);
+      return last3.length === 3 && last3.every(v => v >= 80);
+    }
+    // render daily view
     function renderDaily() {
       const hist = JSON.parse(localStorage.getItem('aba_history') || '[]');
       const last3 = hist.slice(-3);
       dailyContainer.innerHTML = '';
       const cnt = getProtocolsCount();
       for (let i = 1; i <= cnt; i++) {
-        const wrapper = document.createElement('div'); wrapper.className = 'protocol-container'; wrapper.dataset.index = i;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'protocol-container';
+        wrapper.dataset.index = i;
         const title = localStorage.getItem(`protocol${i}_title`) || `Протокол ${i}`;
-        const sel = JSON.parse(localStorage.getItem(`protocol${i}_selectedGoals`) || '[]');
-        const toShow = sel.length ? sel : [1,2,3];
+        const sel   = JSON.parse(localStorage.getItem(`protocol${i}_selectedGoals`) || '[]');
+        const toShow= sel.length ? sel : [1,2,3];
         wrapper.innerHTML = `<h3>${title}</h3><button onclick="openGoalSelector(${i})">Выбрать цели</button>`;
         toShow.forEach((j,rowPos) => {
           const txt = localStorage.getItem(`protocol${i}_goal${j}`) || `Цель ${j}`;
-          const prevArr = last3.map(sess => {
-            const v = sess.data[i-1]?.[rowPos];
-            return (v == null ? '—' : v + '%');
-          });
-          const prev = prevArr.join(' | ');
-          const block = document.createElement('div'); block.className = 'block';
+          const prevArr = last3.map(sess => sess.data[i-1]?.[rowPos] ?? null);
+          const prevPct = prevArr.map(v => v==null?'—':v+'%').join(' | ');
+          const mastered = checkMastery(prevArr);
+          const block = document.createElement('div');
+          block.className = 'block' + (mastered ? ' mastered' : '');
           block.innerHTML = `
             <div class="goal-label">${txt}</div>
             <div class="btn-set">
-              <div><button class="btn-success" onclick="increment(this)">✅</button><div class="count">0</div></div>
-              <div><button class="btn-prompt" onclick="increment(this)">🤝</button><div class="count">0</div></div>
-              <div><button class="btn-error" onclick="increment(this)">➖</button><div class="count">0</div></div>
+              <div><button class="btn-success" onclick="increment(this, '+')">✅</button><div class="count">0</div></div>
+              <div><button class="btn-prompt">🤝</button><div class="count">0</div></div>
+              <div><button class="btn-error" onclick="increment(this, '-')">➖</button><div class="count">0</div></div>
             </div>
-            <div class="percent">—</div>
-            <div class="prev-percent">${prev}</div>
-          `;
+            <div class="percent">${mastered ? 'Мастерство ✓' : '—'}</div>
+            <div class="prev-percent">${prevPct}</div>`;
           wrapper.append(block);
         });
         dailyContainer.append(wrapper);
       }
-    }
-
-function renderHistory() {
-  const hist = JSON.parse(localStorage.getItem('aba_history') || '[]');
-  const cnt  = getProtocolsCount();
-  historyContainer.innerHTML = '<h2>История сессий</h2>';
-  if (!hist.length) {
-    historyContainer.innerHTML += '<p>Нет сохранённых сессий.</p>';
-    return;
-  }
-  // Для каждого протокола своя таблица
-  for (let i = 1; i <= cnt; i++) {
-    const title = localStorage.getItem(`protocol${i}_title`) || `Протокол ${i}`;
-    const sel   = JSON.parse(localStorage.getItem(`protocol${i}_selectedGoals`) || '[]') || [1,2,3];
-
-    const sec = document.createElement('div');
-    sec.className = 'history-session';
-    const hdr = document.createElement('h3');
-    hdr.textContent = title;
-    sec.appendChild(hdr);
-
-    const tbl = document.createElement('table');
-    tbl.className = 'history-table';
-
-    // Шапка с датами
-    const thead = tbl.createTHead();
-    const hr    = thead.insertRow();
-    const th0   = document.createElement('th');
-    th0.textContent = 'Цель';
-    hr.appendChild(th0);
-    hist.forEach(sess => {
-      const th = document.createElement('th');
-      th.textContent = sess.date;
-      hr.appendChild(th);
-    });
-
-    // Тело: каждая выбранная цель в строке
-    const tbody = tbl.createTBody();
-    sel.forEach((gIdx, k) => {
-      const tr = tbody.insertRow();
-      // Текст цели
-      const cell0 = tr.insertCell();
-      cell0.textContent = localStorage.getItem(`protocol${i}_goal${gIdx}`) || `Цель ${gIdx}`;
-      // Проценты за каждую сессию (или “—”)
-      hist.forEach(sess => {
-        const cell = tr.insertCell();
-        const arr  = sess.data[i-1] || [];
-        const v    = arr[k];
-        cell.textContent = v == null ? '—' : v + '%';
+      // attach long press to all prompt buttons
+      document.querySelectorAll('.btn-prompt').forEach(btn => {
+        btn.addEventListener('mousedown', () => {
+          longPressTimer = setTimeout(() => {
+            currentPromptTarget = btn;
+            document.getElementById('prompt-modal').style.display = 'flex';
+          }, 500);
+        });
+        btn.addEventListener('mouseup', () => clearTimeout(longPressTimer));
+        btn.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        // short click increments basic P
+        btn.addEventListener('click', () => {
+          // only if not triggered long press
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            increment(btn, 'P');
+          }
+        });
       });
-    });
-
-    sec.appendChild(tbl);
-    historyContainer.appendChild(sec);
-  }
-}
-
-    function increment(btn) {
-      if (btn.disabled) return;
-      const cntEl = btn.nextElementSibling; cntEl.textContent = +cntEl.textContent + 1;
-      const block = btn.closest('.block');
-      const proto = btn.closest('.protocol-container').querySelector('h3').textContent;
-      const goal = block.querySelector('.goal-label').textContent;
-      const resp = btn.classList.contains('btn-success') ? '✅' : btn.classList.contains('btn-prompt') ? '🤝' : '➖';
-      sendClickToGoogle(proto, goal, resp);
-      updatePercentages(); saveProgress(); undoStack.push(btn); showUndo();
     }
-
-    function sendClickToGoogle(protocol, goal, responseType) {
-      fetch('https://script.google.com/macros/s/AKfycbzu1szsSlgORc4uFgbhy5LvFdCF99UiVuEbzCe_K7UqLvZlmVanUbp6r4pukXbvXZs/exec', {
-        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ protocol, goal, response: responseType })
-      }).catch(console.error);
-    }
-
-    function showUndo() {
-      undoBanner.style.display = 'block';
-      clearTimeout(window.undoTimeout);
-      window.undoTimeout = setTimeout(() => { if (!undoStack.length) undoBanner.style.display = 'none'; }, 5000);
-    }
-
-    undoBanner.onclick = () => {
-      if (undoStack.length) {
-        const b = undoStack.pop(), c = b.nextElementSibling;
-        c.textContent = Math.max(+c.textContent - 1, 0);
-        updatePercentages(); saveProgress();
+    // render history table
+    function renderHistory() {
+      const hist = JSON.parse(localStorage.getItem('aba_history') || '[]');
+      const cnt = getProtocolsCount();
+      historyContainer.innerHTML = '<h2>История сессий</h2>';
+      if (!hist.length) {
+        historyContainer.innerHTML += '<p>Нет сохранённых сессий.</p>';
+        return;
       }
-      if (!undoStack.length) undoBanner.style.display = 'none';
-    };
-
+      for (let i = 1; i <= cnt; i++) {
+        const title = localStorage.getItem(`protocol${i}_title`) || `Протокол ${i}`;
+        const sel   = JSON.parse(localStorage.getItem(`protocol${i}_selectedGoals`) || '[]') || [1,2,3];
+        const sec   = document.createElement('div');
+        sec.className = 'history-session';
+        const hdr = document.createElement('h3');
+        hdr.textContent = title;
+        sec.appendChild(hdr);
+        const tbl = document.createElement('table');
+        tbl.className = 'history-table';
+        const thead = tbl.createTHead();
+        const hr = thead.insertRow();
+        const th0 = document.createElement('th');
+        th0.textContent = 'Цель';
+        hr.appendChild(th0);
+        hist.forEach(sess => {
+          const th = document.createElement('th');
+          th.textContent = sess.date;
+          hr.appendChild(th);
+        });
+        const tbody = tbl.createTBody();
+        sel.forEach((gIdx,k) => {
+          const tr = tbody.insertRow();
+          const cell0 = tr.insertCell();
+          cell0.textContent = localStorage.getItem(`protocol${i}_goal${gIdx}`) || `Цель ${gIdx}`;
+          hist.forEach(sess => {
+            const cell = tr.insertCell();
+            const arr  = sess.data[i-1] || [];
+            const v    = arr[k];
+            const mastered = checkMastery(arr);
+            cell.textContent = v == null ? '—' : v + '%' + (mastered ? ' ✓' : '');
+          });
+        });
+        sec.appendChild(tbl);
+        historyContainer.appendChild(sec);
+      }
+    }
+    // update percentages in UI
     function updatePercentages() {
       document.querySelectorAll('.block').forEach(block => {
         const counts = [...block.querySelectorAll('.count')].map(d => +d.textContent);
-        const total = counts.reduce((s, v) => s + v, 0);
+        const total = counts.reduce((s,v) => s + v, 0);
         const el = block.querySelector('.percent');
         if (total === 0) {
           el.textContent = '—';
@@ -287,22 +287,102 @@ function renderHistory() {
         }
       });
     }
-
+    // save progress counts
     function saveProgress() {
       const arr = [...document.querySelectorAll('.count')].map(d => d.textContent);
       localStorage.setItem('aba_counts', JSON.stringify(arr));
     }
-
     function loadProgress() {
       const arr = JSON.parse(localStorage.getItem('aba_counts') || '[]');
-      document.querySelectorAll('.count').forEach((d, i) => { if (arr[i] != null) d.textContent = arr[i]; });
+      document.querySelectorAll('.count').forEach((d,i) => {
+        if (arr[i] != null) d.textContent = arr[i];
+      });
       updatePercentages();
     }
-
+    // undo banner
+    function showUndo() {
+      undoBanner.style.display = 'block';
+      clearTimeout(window.undoTimeout);
+      window.undoTimeout = setTimeout(() => {
+        if (!undoStack.length) undoBanner.style.display = 'none';
+      }, 5000);
+    }
+    undoBanner.onclick = () => {
+      if (undoStack.length) {
+        const btn = undoStack.pop();
+        const cnt = btn.nextElementSibling;
+        cnt.textContent = Math.max(+cnt.textContent - 1, 0);
+        updatePercentages();
+        saveProgress();
+      }
+      if (!undoStack.length) undoBanner.style.display = 'none';
+    };
+    // sending data to Apps Script (update your script ID)
+    function sendClickToGoogle(protocol, goal, responseType) {
+      // not used here since we use aggregated send in clearData
+    }
+    /** Send aggregated session results */
+    function clearData() {
+      const date = new Date().toLocaleDateString('ru-RU');
+      const child = localStorage.getItem('child_name') || '';
+      const session = { date, data: [] };
+      document.querySelectorAll('.protocol-container').forEach(pc => {
+        const protocol = pc.querySelector('h3').textContent;
+        const goalsHistory = [];
+        const goalsServer  = [];
+        pc.querySelectorAll('.block').forEach(block => {
+          const name   = block.querySelector('.goal-label').textContent.trim();
+          const counts = [...block.querySelectorAll('.count')].map(d => +d.textContent);
+          const total  = counts.reduce((s,v) => s + v, 0);
+          const pct    = total ? Math.round(counts[0] / total * 100) : null;
+          goalsHistory.push(pct);
+          const responses = [];
+          for (let i = 0; i < counts[0]; i++) responses.push('+');
+          for (let i = 0; i < counts[1]; i++) responses.push('P');
+          for (let i = 0; i < counts[2]; i++) responses.push('-');
+          goalsServer.push({ name: name, responses: responses.join(' '), percent: pct != null ? pct + '%' : '' });
+        });
+        session.data.push(goalsHistory);
+        sendSessionResults({ protocol, date, child, goals: goalsServer });
+      });
+      const hist = JSON.parse(localStorage.getItem('aba_history') || '[]');
+      hist.push(session);
+      if (hist.length > 10) hist.shift();
+      localStorage.setItem('aba_history', JSON.stringify(hist));
+      document.querySelectorAll('.count').forEach(e => e.textContent = '0');
+      updatePercentages();
+      saveProgress();
+      renderHistory();
+    }
+    function sendSessionResults(sessionData) {
+      // replace with your Apps Script URL
+      fetch('https://https://script.google.com/macros/s/AKfycbzJF3UkOxBWxMhJAgLcH1tiPBxC1ORl62_XLlhYzrgzmi68robhb68aGvoeUsNvvkZI/exec', {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sessionData)
+      }).catch(console.error);
+    }
+    // close prompt modal
+    function closePromptModal() {
+      document.getElementById('prompt-modal').style.display = 'none';
+    }
+    function selectPrompt(type) {
+      // close and trigger increment with prompt type
+      document.getElementById('prompt-modal').style.display = 'none';
+      if (currentPromptTarget) {
+        const cntEl = currentPromptTarget.nextElementSibling;
+        cntEl.textContent = +cntEl.textContent + 1;
+        updatePercentages();
+        saveProgress();
+        // aggregated: do nothing here
+        currentPromptTarget = null;
+      }
+    }
     document.addEventListener('DOMContentLoaded', () => {
       modeSlider.oninput = toggleMode;
       document.getElementById('clearBtn').onclick = clearData;
-      renderDaily(); loadProgress(); renderHistory(); toggleMode();
+      renderDaily();
+      loadProgress();
+      renderHistory();
+      toggleMode();
     });
   </script>
 </body>
